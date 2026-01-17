@@ -1,0 +1,22 @@
+services:
+  hytale-server:
+    build: .
+    image: ghcr.io/ericbriscoe/hytale-docker-server:latest
+    container_name: hytale-server
+    restart: unless-stopped
+    stop_grace_period: 2m
+    stdin_open: true
+    tty: true
+    ports:
+      - "5520:5520/udp"
+    environment:
+      - HYTALE_MEMORY=${HYTALE_MEMORY:-4G}
+      - HYTALE_PORT=5520
+      - HYTALE_VIEW_DISTANCE=${HYTALE_VIEW_DISTANCE:-12}
+      - HYTALE_AUTH_MODE=authenticated
+      - HYTALE_BACKUP_ENABLED=${HYTALE_BACKUP_ENABLED:-false}
+      - HYTALE_BACKUP_FREQUENCY=${HYTALE_BACKUP_FREQUENCY:-30}
+      - HYTALE_AUTO_UPDATE=${HYTALE_AUTO_UPDATE:-true}
+      - TZ=${TZ:-UTC}
+    volumes:
+      - ./data:/app/data
