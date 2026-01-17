@@ -3,9 +3,9 @@ set -e
 
 DATA_DIR="/app/data"
 SERVER_DIR="$DATA_DIR/server"
-DOWNLOADER_CONFIG="$DATA_DIR/.hytale-downloader"
+DOWNLOADER_DIR="$DATA_DIR/downloader"
 
-mkdir -p "$SERVER_DIR" "$DOWNLOADER_CONFIG"
+mkdir -p "$SERVER_DIR" "$DOWNLOADER_DIR"
 
 export HOME="$DATA_DIR"
 export XDG_DATA_HOME="$DATA_DIR"
@@ -19,12 +19,44 @@ echo "Port: $HYTALE_PORT/UDP"
 echo "View Distance: $HYTALE_VIEW_DISTANCE"
 echo "=========================================="
 
+install_downloader() {
+    if [ -f "$DOWNLOADER_DIR/hytale-downloader" ]; then
+        echo "hytale-downloader already installed."
+        return 0
+    fi
+
+    echo "Installing hytale-downloader..."
+
+    ARCH=$(uname -m)
+    case $ARCH in
+        x86_64) ARCH_SUFFIX="amd64" ;;
+        aarch64) ARCH_SUFFIX="arm64" ;;
+        *) echo "Unsupported architecture: $ARCH"; exit 1 ;;
+    esac
+
+    DOWNLOAD_URL="https://github.com/decomp-project/hytale-downloader/releases/latest/download/hytale-downloader-linux-${ARCH_SUFFIX}"
+
+    echo "Downloading from: $DOWNLOAD_URL"
+    curl -L -o "$DOWNLOADER_DIR/hytale-downloader" "$DOWNLOAD_URL" || {
+        echo "Failed to download hytale-downloader. Trying alternative..."
+        curl -L -o /tmp/hytale-downloader.zip "https://cdn.hytale.com/tools/hytale-downloader.zip" && \
+        unzip -o /tmp/hytale-downloader.zip -d "$DOWNLOADER_DIR" && \
+        rm /tmp/hytale-downloader.zip
+    }
+
+    chmod +x "$DOWNLOADER_DIR/hytale-downloader"
+    echo "hytale-downloader installed successfully."
+}
+
 if [ ! -f "$SERVER_DIR/HytaleServer.jar" ] || [ "${HYTALE_AUTO_UPDATE:-true}" = "true" ]; then
+    install_downloader
+
+    echo ""
     echo "Running hytale-downloader to fetch/update server files..."
     echo "If this is first run, you'll need to authenticate via the URL below."
     echo ""
 
-    /opt/hytale-downloader/hytale-downloader -download-path "$SERVER_DIR/game.zip" || {
+    "$DOWNLOADER_DIR/hytale-downloader" -download-path "$SERVER_DIR/game.zip" || {
         echo "Downloader failed. Checking for manually placed files..."
         if [ ! -f "$SERVER_DIR/HytaleServer.jar" ]; then
             echo "ERROR: No HytaleServer.jar found. Please complete authentication or place files manually."

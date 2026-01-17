@@ -20,11 +20,6 @@ RUN apt-get update && apt-get install -y --no-install-recommends \
 
 WORKDIR /app
 
-RUN curl -L -o /tmp/hytale-downloader.zip "https://cdn.hytale.com/tools/hytale-downloader.zip" && \
-    unzip /tmp/hytale-downloader.zip -d /opt/hytale-downloader && \
-    chmod +x /opt/hytale-downloader/hytale-downloader && \
-    rm /tmp/hytale-downloader.zip
-
 COPY entrypoint.sh /entrypoint.sh
 RUN chmod +x /entrypoint.sh
 
